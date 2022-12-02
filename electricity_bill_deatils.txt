@@ -1,0 +1,67 @@
+create table electricity_bill(USN number,customer_name VARCHAR2(100),amount number,bill_date date,due_date date,payment_status char(2));
+/
+insert into electricity_bill values(112233,'hamaresh',550,'10-oct-2022','10-nov-2022','n');
+insert into electricity_bill values(223344,'rokesh',750,'20-oct-2022','20-nov-2022','n');
+insert into electricity_bill values(334455,'rajesh',400,'24-nov-2022','23-dec-2022','y');
+insert into electricity_bill values(445566,'rohit',300,'30-nov-2022','23-dec-2022','y');
+insert into electricity_bill values(556677,'basha',500,'01-nov-2022','02-dec-2022','n');
+insert into electricity_bill values(667788,'suresh',585,'01-sep-2022','02-oct-2022','n');
+insert into electricity_bill values(778899,'vinod',1200,'01-sep-2022','02-dec-2022','y');
+insert into electricity_bill values(778800,'harish',1500,'22-sep-2022','30-nov-2022','y');
+insert into electricity_bill values(778811,'toni',350,'22-apr-2022','23-may-2022','y');
+insert into electricity_bill values(778822,'jack',845,'22-jun-2022','23-may-2022','n');
+commit;
+select * from electricity_bill;
+/
+set serveroutput on;
+create or replace procedure electricity_details_proc(p_usn_number number,p_customer_name out varchar2,p_amount out number,p_due_date out date,p_msg out varchar2)
+AS
+  l_count number;
+Begin
+      select count(*) into l_count from electricity_bill where USN = p_usn_number;
+       if l_count=0 then
+           p_msg:='Invalid USN number';
+       elsif l_count=1 then
+           select customer_name,amount,due_date INTO p_customer_name,p_amount,p_due_date from electricity_bill
+           where USN = p_usn_number
+           AND payment_status='n';
+           p_msg:='Pending Due Detils';
+       END if;
+       exception
+          when NO_DATA_FOUND then
+           p_msg:='NO pending dues are there';
+       end electricity_details_proc; 
+ /
+ Declare
+         name varchar2(100);
+         amt  number;
+         due_dt date;
+         msg varchar2(100);
+ Begin
+      electricity_details_proc(223344,name,amt,due_dt,msg);
+      dbms_output.put_line(name||':'||amt||':'||due_dt);
+      dbms_output.put_line(msg);
+ end;     
+ /
+ Declare
+         name varchar2(100);
+         amt  number;
+         due_dt date;
+         msg varchar2(100);
+ Begin
+      electricity_details_proc(334455,name,amt,due_dt,msg);
+      dbms_output.put_line(name||':'||amt||':'||due_dt);
+      dbms_output.put_line(msg);
+ end;    
+/
+ Declare
+         name varchar2(100);
+         amt  number;
+         due_dt date;
+         msg varchar2(100);
+ Begin
+      electricity_details_proc(335555,name,amt,due_dt,msg);
+      dbms_output.put_line(name||':'||amt||':'||due_dt);
+      dbms_output.put_line(msg);
+ end;    
+/
