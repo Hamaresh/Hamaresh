@@ -10,6 +10,7 @@ insert into electricity_bill values(778899,'vinod',1200,'01-sep-2022','02-dec-20
 insert into electricity_bill values(778800,'harish',1500,'22-sep-2022','30-nov-2022','y');
 insert into electricity_bill values(778811,'toni',350,'22-apr-2022','23-may-2022','y');
 insert into electricity_bill values(778822,'jack',845,'22-jun-2022','23-may-2022','n');
+insert into electricity_bill values(778823,'james',678,'21-nov-2022','23-dec-2022','y');
 commit;
 select * from electricity_bill;
 /
