@@ -1,0 +1,95 @@
+create table leave(empid number(5)primary key,DOJ date,casual_leaves number(5),sick_leaves number(4),earned_leaves number(5));
+/
+insert into leave values(100,'01-jan-2021',6,6,12);
+insert into leave values(101,'16-jan-2021',5.75,5.75,11.5);
+insert into leave values(102,'01-mar-2021',5,5,10);
+insert into leave values(103,'01-feb-2021',3,3,6);
+insert into leave values(104,'20-jan-2021',6,6,12);
+insert into leave values(105,'30-mar-2021',4,4,8);
+insert into leave values(106,'12-jan-2021',6,6,12);
+insert into leave values(107,'15-jan-2021',6,6,12);
+/
+select * from leave;
+set serveroutput on;
+create or replace procedure new_employees_leaves_credit(p_empid number,p_message out varchar2)
+as
+  l_joining_day number;
+  l_joining_month number;
+  l_casual number;
+  l_sick number;
+  l_earned number;
+begin
+ select to_char(sysdate,'dd'),to_char(sysdate,'mm') into l_joining_day,l_joining_month from dual;
+ if l_joining_day <= 15 then
+   l_casual := (12-l_joining_month)*0.5+0.5;
+   l_sick   := (12-l_joining_month)*0.5+0.5;
+   l_earned := (12-l_joining_month)+1;
+else
+   l_casual := (12-l_joining_month)*0.5+0.25;
+   l_sick   := (12-l_joining_month)*0.5+0.25;
+   l_earned := (12-l_joining_month)+0.5;
+end if;
+insert into leave(empid,DOJ,casual_leaves,sick_leaves,earned_leaves)values(p_empid,sysdate,l_casual,l_sick,l_earned);
+commit;
+p_message := 'leaves are credited successfully for empid:'||p_empid;
+end new_employees_leaves_credit;
+/
+declare
+  message varchar2(200);
+begin
+    new_employees_leaves_credit(109,message);
+    dbms_output.put_line(message);
+end;    
+/
+create or replace procedure leaves_rollover(p_message out varchar2)
+as
+begin
+  execute immediate
+   'create table leave'||to_char(sysdate,'dd_mm_yyyy_hhmiss')||' as select * from leave';
+   update leave
+   set casual_leaves =6,
+       sick_leaves = 6,
+       earned_leaves = earned_leaves+12,
+       last_update_time = sysdate,
+       updated by = user;
+commit;
+p_message := 'leaves updated successfully for all employees';
+end leaves_rollover;
+/
+set casual_leaves =6,
+       sick_leaves = 6,
+       earned_leaves = nvl(earned_leaves,0)+12,
+       last_update_time = sysdate,
+       updated by = user;
+commit;
+p_message := 'leaves updated successfully for all employees';
+end leaves_rollover;
+/
+set casual_leaves =6,
+       sick_leaves = 6,
+       earned_leaves = case when nvl(earned_leaves,0)+12>40
+                       then 40
+                          else nvl(earned_leaves,0)+12
+                        end;
+       last_update_time = sysdate,
+       updated by = user;
+commit;
+p_message := 'leaves updated successfully for all employees';
+end leaves_rollover;
+/
+declare
+     message varchar2(200);
+begin
+   leaves_rollover(message);
+   dbms_output.put_line(message);
+end;
+/
+begin
+  dbms_scheduler.create_job(
+  job_name  => 'yearly_leaves_rollover',
+  job_type  => 'stored_procedure',
+  job_action => 'leaves_rollover';
+  start_date => '01-jan-2022 00:00:01 am',
+  repeat_interval => 'freq=yearly',
+  enabled         => true);
+end;  
